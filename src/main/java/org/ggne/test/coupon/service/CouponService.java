@@ -37,8 +37,8 @@ public class CouponService {
         // 1. 사용자 존재 확인
         userService.getUser(userId);
 
-        // 2. 쿠폰 조회
-        Coupon coupon = couponRepository.findById(couponId)
+        // 2. 쿠폰 조회 (비관적 락 적용)
+        Coupon coupon = couponRepository.findByIdWithLock(couponId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.COUPON_NOT_FOUND));
 
         // 3. 발급 가능 여부 확인 (만료일, 총 수량)
