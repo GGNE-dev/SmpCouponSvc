@@ -12,5 +12,11 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
 
+  redis:
+    image: redis:latest
+    container_name: coupon-redis
+    ports:
+      - "6379:6379"
+
 volumes:
   mysql-data:

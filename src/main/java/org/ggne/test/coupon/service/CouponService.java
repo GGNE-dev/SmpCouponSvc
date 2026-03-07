@@ -1,6 +1,7 @@
 package org.ggne.test.coupon.service;
 
 import lombok.RequiredArgsConstructor;
+import org.ggne.test.common.aop.DistributedLock;
 import org.ggne.test.common.exception.BusinessException;
 import org.ggne.test.common.exception.ErrorCode;
 import org.ggne.test.coupon.domain.Coupon;
@@ -32,13 +33,14 @@ public class CouponService {
         return couponRepository.save(coupon).getId();
     }
 
-    @Transactional
+    @DistributedLock(key = "'coupon:' + #couponId")
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
     public Long issue(Long couponId, Long userId) {
         // 1. 사용자 존재 확인
         userService.getUser(userId);
 
-        // 2. 쿠폰 조회 (비관적 락 적용)
-        Coupon coupon = couponRepository.findByIdWithLock(couponId)
+        // 2. 쿠폰 조회 (분산 락을 사용하므로 일반 조회 사용)
+        Coupon coupon = couponRepository.findById(couponId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.COUPON_NOT_FOUND));
 
         // 3. 발급 가능 여부 확인 (만료일, 총 수량)
