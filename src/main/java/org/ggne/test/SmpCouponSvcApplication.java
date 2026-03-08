@@ -9,5 +9,4 @@ public class SmpCouponSvcApplication {
     public static void main(String[] args) {
         SpringApplication.run(SmpCouponSvcApplication.class, args);
     }
-
 }

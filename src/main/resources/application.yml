@@ -1,3 +1,15 @@
 spring:
   profiles:
     active: local
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus, health, metrics
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: smp-coupon-svc
