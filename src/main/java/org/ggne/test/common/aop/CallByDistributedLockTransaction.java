@@ -18,4 +18,12 @@ public class CallByDistributedLockTransaction {
     public Object proceed(final ProceedingJoinPoint joinPoint) throws Throwable {
         return joinPoint.proceed();
     }
+
+    /**
+     * Supplier를 사용하여 새로운 트랜잭션 내에서 로직을 수행합니다.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public Object proceed(final java.util.function.Supplier<Object> supplier) {
+        return supplier.get();
+    }
 }

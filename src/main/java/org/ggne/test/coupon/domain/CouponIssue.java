@@ -50,4 +50,9 @@ public class CouponIssue {
         this.status = IssueStatus.USED;
         this.usedAt = LocalDateTime.now();
     }
+
+    public void cancel() {
+        this.status = IssueStatus.AVAILABLE;
+        this.usedAt = null;
+    }
 }
