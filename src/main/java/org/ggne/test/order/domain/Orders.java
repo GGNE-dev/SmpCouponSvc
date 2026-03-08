@@ -56,4 +56,18 @@ public class Orders {
         this.finalPrice = finalPrice;
         this.status = OrderStatus.PENDING; // 기본값
     }
+
+    public void pay() {
+        if (this.status != OrderStatus.PENDING) {
+            throw new IllegalStateException("결제 대기 상태인 주문만 결제할 수 있습니다.");
+        }
+        this.status = OrderStatus.PAID;
+    }
+
+    public void cancel() {
+        if (this.status == OrderStatus.CANCELLED) {
+            throw new IllegalStateException("이미 취소된 주문입니다.");
+        }
+        this.status = OrderStatus.CANCELLED;
+    }
 }

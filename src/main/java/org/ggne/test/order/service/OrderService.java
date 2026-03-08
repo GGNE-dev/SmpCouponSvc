@@ -81,4 +81,36 @@ public class OrderService {
         return orderRepository.findById(orderId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
     }
+
+    @Transactional
+    public void payOrder(Long orderId, Long userId) {
+        Orders order = getOrder(orderId);
+
+        // 소유자 검증
+        if (!order.getUserId().equals(userId)) {
+            throw new BusinessException(ErrorCode.COUPON_NOT_OWNED); // 주문용 권한 에러 코드가 없으므로 일단 쿠폰용 에러 사용
+        }
+
+        order.pay();
+    }
+
+    @Transactional
+    public void cancelOrder(Long orderId, Long userId) {
+        Orders order = getOrder(orderId);
+
+        // 소유자 검증
+        if (!order.getUserId().equals(userId)) {
+            throw new BusinessException(ErrorCode.COUPON_NOT_OWNED);
+        }
+
+        // 주문 상태 변경
+        order.cancel();
+
+        // 쿠폰 복구
+        if (order.getCouponIssueId() != null) {
+            CouponIssue couponIssue = couponIssueRepository.findById(order.getCouponIssueId())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.COUPON_ISSUE_NOT_FOUND));
+            couponIssue.cancel();
+        }
+    }
 }

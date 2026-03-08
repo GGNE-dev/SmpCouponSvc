@@ -38,4 +38,22 @@ public class OrderController {
         Orders order = orderService.getOrder(orderId);
         return ApiResponse.success(HttpStatus.OK.value(), OrderResponse.from(order));
     }
+
+    @PostMapping("/{orderId}/pay")
+    public ApiResponse<Void> payOrder(
+            @PathVariable Long orderId,
+            @RequestHeader("X-USER-ID") Long userId
+    ) {
+        orderService.payOrder(orderId, userId);
+        return ApiResponse.success(HttpStatus.OK.value(), null);
+    }
+
+    @PostMapping("/{orderId}/cancel")
+    public ApiResponse<Void> cancelOrder(
+            @PathVariable Long orderId,
+            @RequestHeader("X-USER-ID") Long userId
+    ) {
+        orderService.cancelOrder(orderId, userId);
+        return ApiResponse.success(HttpStatus.OK.value(), null);
+    }
 }
