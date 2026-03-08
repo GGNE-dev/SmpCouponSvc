@@ -1,4 +1,4 @@
-# SmpCouponSvc (선착순 쿠폰 발급 및 주문 마이크로서비스)
+# SmpCouponSvc (선착순 쿠폰 발급 및 주문 서비스)
 
 `SmpCouponSvc`는 대규모 트래픽 환경에서 발생하는 **동시성 문제(Concurrency Issue)**를 해결하고, 시스템의 상태를 실시간으로 추적하는 **관측성(Observability)**을 확보하는 데 중점을 둔 쿠폰 관리 예제 서비스입니다.
 
