@@ -79,6 +79,38 @@ public class CouponService {
         }
     }
 
+    @Transactional
+    public Long issueWithPessimisticLock(Long couponId, Long userId) {
+        // 1. 사용자 존재 확인
+        userService.getUser(userId);
+
+        // 2. 쿠폰 조회 (비관적 락 적용)
+        Coupon coupon = couponRepository.findByIdWithLock(couponId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.COUPON_NOT_FOUND));
+
+        // 3. 발급 가능 여부 확인
+        if (!coupon.isIssueable()) {
+            if (coupon.getExpiredAt().isBefore(LocalDateTime.now())) {
+                throw new BusinessException(ErrorCode.COUPON_EXPIRED);
+            }
+            throw new BusinessException(ErrorCode.COUPON_OUT_OF_STOCK);
+        }
+
+        // 4. 중복 발급 확인
+        if (couponIssueRepository.existsByCouponIdAndUserId(couponId, userId)) {
+            throw new BusinessException(ErrorCode.COUPON_ALREADY_ISSUED);
+        }
+
+        // 5. 발급 내역 저장
+        CouponIssue couponIssue = new CouponIssue(couponId, userId);
+        couponIssueRepository.save(couponIssue);
+
+        // 6. 쿠폰 발급 수량 증가
+        coupon.incrementIssuedQuantity();
+
+        return couponIssue.getId();
+    }
+
     public Coupon getCoupon(Long couponId) {
         return couponRepository.findById(couponId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.COUPON_NOT_FOUND));

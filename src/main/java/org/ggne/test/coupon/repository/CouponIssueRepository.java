@@ -8,4 +8,5 @@ import java.util.List;
 public interface CouponIssueRepository extends JpaRepository<CouponIssue, Long> {
     boolean existsByCouponIdAndUserId(Long couponId, Long userId);
     List<CouponIssue> findAllByUserId(Long userId);
+    long countByCouponId(Long couponId);
 }
