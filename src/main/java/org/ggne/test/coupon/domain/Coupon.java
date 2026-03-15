@@ -5,6 +5,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.ggne.test.common.domain.Money;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -27,8 +28,10 @@ public class Coupon {
     @Column(nullable = false, length = 20)
     private DiscountType discountType;
 
-    @Column(nullable = false)
-    private int discountValue; // 정액: 원, 정률: %
+    // Money의 amount 필드가 INT 타입으로 매핑 됨.
+    @Embedded
+    @AttributeOverride(name = "amount", column = @Column(name = "discount_value", nullable = false))
+    private Money discountValue; // 정액: 원, 정률: %
 
     @Column(nullable = false)
     private int totalQuantity; // 전체 발급 가능 수량
@@ -47,7 +50,7 @@ public class Coupon {
     public Coupon(String name, DiscountType discountType, int discountValue, int totalQuantity, LocalDateTime expiredAt) {
         this.name = name;
         this.discountType = discountType;
-        this.discountValue = discountValue;
+        this.discountValue = new Money(discountValue);
         this.totalQuantity = totalQuantity;
         this.issuedQuantity = 0;
         this.expiredAt = expiredAt;
@@ -64,10 +67,10 @@ public class Coupon {
     }
 
     // 할인 금액 계산
-    public int calculateDiscount(int originalPrice) {
+    public Money calculateDiscount(Money originalPrice) {
         return switch (this.getDiscountType()) {
             case FIXED -> this.getDiscountValue();
-            case RATE -> (int) (originalPrice * (this.getDiscountValue() / 100.0));
+            case RATE -> originalPrice.multiplyByRate(this.discountValue.getAmount());
         };
     }
 }

@@ -70,7 +70,7 @@ class OrderServiceTest {
 
         // then
         Orders order = orderRepository.findById(orderId).orElseThrow();
-        assertThat(order.getFinalPrice()).isEqualTo(10000);
+        assertThat(order.getFinalPrice().getAmount()).isEqualTo(10000);
         assertThat(order.getStatus()).isEqualTo(OrderStatus.PENDING);
     }
 
@@ -85,8 +85,8 @@ class OrderServiceTest {
 
         // then
         Orders order = orderRepository.findById(orderId).orElseThrow();
-        assertThat(order.getDiscountAmount()).isEqualTo(1000);
-        assertThat(order.getFinalPrice()).isEqualTo(9000);
+        assertThat(order.getDiscountAmount().getAmount()).isEqualTo(1000);
+        assertThat(order.getFinalPrice().getAmount()).isEqualTo(9000);
         
         CouponIssue couponIssue = couponIssueRepository.findById(couponIssueId).orElseThrow();
         assertThat(couponIssue.getStatus()).isEqualTo(IssueStatus.USED);

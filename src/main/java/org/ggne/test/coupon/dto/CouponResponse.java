@@ -22,7 +22,7 @@ public class CouponResponse {
                 .couponId(coupon.getId())
                 .name(coupon.getName())
                 .discountType(coupon.getDiscountType())
-                .discountValue(coupon.getDiscountValue())
+                .discountValue(coupon.getDiscountValue().getAmount())
                 .remainQuantity(coupon.getTotalQuantity() - coupon.getIssuedQuantity())
                 .expiredAt(coupon.getExpiredAt())
                 .build();

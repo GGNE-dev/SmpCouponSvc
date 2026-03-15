@@ -1,6 +1,7 @@
 package org.ggne.test.order.service;
 
 import lombok.RequiredArgsConstructor;
+import org.ggne.test.common.domain.Money;
 import org.ggne.test.common.exception.BusinessException;
 import org.ggne.test.common.exception.ErrorCode;
 import org.ggne.test.coupon.domain.Coupon;
@@ -29,7 +30,8 @@ public class OrderService {
         // 1. 사용자 존재 확인
         userService.getUser(userId);
 
-        int discountAmount = 0;
+        // 기존 int 타입에서 Money 타입으로 변경
+        Money discountAmount = new Money(0);
 
         // 2. 쿠폰 적용 시 검증 및 할인 계산
         if (couponIssueId != null) {
@@ -50,21 +52,20 @@ public class OrderService {
             Coupon coupon = couponRepository.findById(couponIssue.getCouponId())
                     .orElseThrow(() -> new BusinessException(ErrorCode.COUPON_NOT_FOUND));
 
-            discountAmount = coupon.calculateDiscount(originalPrice);
+            discountAmount = coupon.calculateDiscount(new Money(originalPrice));
             
             // 쿠폰 사용 처리 (USED)
             couponIssue.use();
         }
 
         // 3. 주문 엔티티 생성 및 저장
-        int finalPrice = Math.max(0, originalPrice - discountAmount);
         Orders order = Orders.builder()
                 .userId(userId)
                 .couponIssueId(couponIssueId)
                 .itemName(itemName)
                 .originalPrice(originalPrice)
-                .discountAmount(discountAmount)
-                .finalPrice(finalPrice)
+                .discountAmount(discountAmount.getAmount())
+                .finalPrice(Math.max(0, originalPrice - discountAmount.getAmount()))
                 .build();
 
         return orderRepository.save(order).getId();

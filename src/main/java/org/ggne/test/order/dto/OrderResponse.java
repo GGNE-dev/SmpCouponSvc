@@ -21,9 +21,9 @@ public class OrderResponse {
         return OrderResponse.builder()
                 .orderId(order.getId())
                 .itemName(order.getItemName())
-                .originalPrice(order.getOriginalPrice())
-                .discountAmount(order.getDiscountAmount())
-                .finalPrice(order.getFinalPrice())
+                .originalPrice(order.getOriginalPrice().getAmount())
+                .discountAmount(order.getDiscountAmount().getAmount())
+                .finalPrice(order.getFinalPrice().getAmount())
                 .status(order.getStatus().name())
                 .orderedAt(order.getOrderedAt())
                 .build();

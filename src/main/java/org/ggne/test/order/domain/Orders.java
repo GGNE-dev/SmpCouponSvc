@@ -5,6 +5,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.ggne.test.common.domain.Money;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -29,14 +30,20 @@ public class Orders {
     @Column(nullable = false, length = 200)
     private String itemName;
 
+    @Embedded
+    @AttributeOverride(name = "amount", column = @Column(name = "original_price", nullable = false))
     @Column(nullable = false)
-    private int originalPrice;
+    private Money originalPrice;
 
+    @Embedded
+    @AttributeOverride(name = "amount", column = @Column(name = "discount_amount", nullable = false))
     @Column(nullable = false)
-    private int discountAmount;
+    private Money discountAmount;
 
+    @Embedded
+    @AttributeOverride(name = "amount", column = @Column(name = "final_price", nullable = false))
     @Column(nullable = false)
-    private int finalPrice;
+    private Money finalPrice;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -51,10 +58,10 @@ public class Orders {
         this.userId = userId;
         this.couponIssueId = couponIssueId;
         this.itemName = itemName;
-        this.originalPrice = originalPrice;
-        this.discountAmount = discountAmount;
-        this.finalPrice = finalPrice;
-        this.status = OrderStatus.PENDING; // 기본값
+        this.originalPrice = new Money(originalPrice);
+        this.discountAmount = new Money(discountAmount);
+        this.finalPrice = new Money(finalPrice);
+        this.status = OrderStatus.PENDING;
     }
 
     public void pay() {
