@@ -50,7 +50,7 @@ public class OrderService {
             Coupon coupon = couponRepository.findById(couponIssue.getCouponId())
                     .orElseThrow(() -> new BusinessException(ErrorCode.COUPON_NOT_FOUND));
 
-            discountAmount = calculateDiscount(originalPrice, coupon);
+            discountAmount = coupon.calculateDiscount(originalPrice);
             
             // 쿠폰 사용 처리 (USED)
             couponIssue.use();
@@ -68,13 +68,6 @@ public class OrderService {
                 .build();
 
         return orderRepository.save(order).getId();
-    }
-
-    private int calculateDiscount(int originalPrice, Coupon coupon) {
-        return switch (coupon.getDiscountType()) {
-            case FIXED -> coupon.getDiscountValue();
-            case RATE -> (int) (originalPrice * (coupon.getDiscountValue() / 100.0));
-        };
     }
 
     public Orders getOrder(Long orderId) {

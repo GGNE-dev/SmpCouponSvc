@@ -62,4 +62,12 @@ public class Coupon {
     public boolean isIssueable() {
         return issuedQuantity < totalQuantity && expiredAt.isAfter(LocalDateTime.now());
     }
+
+    // 할인 금액 계산
+    public int calculateDiscount(int originalPrice) {
+        return switch (this.getDiscountType()) {
+            case FIXED -> this.getDiscountValue();
+            case RATE -> (int) (originalPrice * (this.getDiscountValue() / 100.0));
+        };
+    }
 }
