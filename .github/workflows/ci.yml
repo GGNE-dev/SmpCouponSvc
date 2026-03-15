@@ -1,4 +1,20 @@
-name: Java CI with Gradle
+# ============================================================
+# CI (Continuous Integration) 워크플로우
+# ============================================================
+# 언제 실행되나:
+#   - main/develop 브랜치에 push할 때
+#   - main/develop 브랜치로 PR 올릴 때
+#
+# 하는 일:
+#   1. 코드 체크아웃
+#   2. JDK 21 셋업
+#   3. MySQL + Redis 서비스 컨테이너 실행
+#   4. 전체 테스트 실행
+#   5. 테스트 결과 리포트 생성
+#   6. 빌드된 JAR 아티팩트 저장
+# ============================================================
+
+name: CI
 
 on:
   push:
@@ -6,22 +22,100 @@ on:
   pull_request:
     branches: [ "main", "develop" ]
 
+# 이 워크플로우가 가지는 GitHub 권한
 permissions:
   contents: read
+  checks: write      # 테스트 리포트를 PR에 표시하기 위해 필요
 
 jobs:
-  build:
+  test:
+    name: Build and Test
+    # GitHub이 제공하는 무료 Ubuntu 가상머신에서 실행
     runs-on: ubuntu-latest
+
+    # ── 서비스 컨테이너 ──────────────────────────────────────
+    # 테스트 실행 전에 MySQL, Redis를 컨테이너로 자동 실행
+    # 테스트가 끝나면 자동으로 종료됨
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: coupon_db    # 테스트용 DB
+          MYSQL_USER: coupon
+          MYSQL_PASSWORD: coupon123
+        ports:
+          - 3306:3306                  # Runner VM의 3306 → MySQL 컨테이너 3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379                  # Runner VM의 6379 → Redis 컨테이너 6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up JDK 21
-      uses: actions/setup-java@v4
-      with:
-        java-version: '21'
-        distribution: 'temurin'
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@v4
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-    - name: Build with Gradle
-      run: ./gradlew build
+      # ── 1. 코드 체크아웃 ─────────────────────────────────────
+      # actions/checkout: GitHub 공식 액션, 저장소 코드를 Runner에 다운로드
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ── 2. JDK 21 설치 ───────────────────────────────────────
+      # actions/setup-java: JDK 설치 + Gradle 캐시 설정
+      # cache: gradle → .gradle 폴더를 캐시해서 매번 의존성 다운로드 방지
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+
+      # ── 3. gradlew 실행 권한 부여 ────────────────────────────
+      # Git은 파일 실행 권한을 저장하지 않을 수 있음
+      # Linux에서 ./gradlew 실행하려면 +x 권한 필요
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # ── 4. 테스트 실행 ───────────────────────────────────────
+      # env: 테스트 시 사용할 환경변수 (서비스 컨테이너 접속 정보)
+      # GitHub Actions Runner의 localhost = 서비스 컨테이너에 접근 가능
+      - name: Run tests
+        run: ./gradlew test --no-daemon
+        env:
+          SPRING_PROFILES_ACTIVE: test
+          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/coupon_db?serverTimezone=Asia/Seoul
+          SPRING_DATASOURCE_USERNAME: coupon
+          SPRING_DATASOURCE_PASSWORD: coupon123
+          SPRING_DATA_REDIS_HOST: localhost
+          SPRING_DATA_REDIS_PORT: 6379
+
+      # ── 5. 테스트 리포트 생성 ────────────────────────────────
+      # if: always() → 테스트 실패해도 리포트는 항상 생성
+      # dorny/test-reporter: JUnit XML 결과를 PR 체크 탭에 예쁘게 표시
+      - name: Publish test results
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: Test Results
+          path: build/test-results/test/*.xml
+          reporter: java-junit
+          fail-on-error: false
+
+      # ── 6. JAR 아티팩트 저장 ────────────────────────────────
+      # 빌드 성공 시 JAR 파일을 GitHub에 5일간 보관
+      # CD 워크플로우에서 이 아티팩트를 재사용 가능
+      - name: Upload build artifacts
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: build/libs/*.jar
+          retention-days: 5

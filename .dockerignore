@@ -1,0 +1,56 @@
+# ============================================================
+# .dockerignore - Docker 빌드 컨텍스트에서 제외할 파일들
+# ============================================================
+# docker build 시 현재 디렉토리 전체를 Docker 데몬에 전송하는데,
+# 이 파일에 적힌 것들은 전송에서 제외됨
+# → 빌드 속도 향상 + 이미지에 민감한 파일 포함 방지
+# ============================================================
+
+# Git 관련 (소스 히스토리는 이미지에 불필요)
+.git
+.gitignore
+.gitattributes
+
+# 빌드 산출물 (Stage 1에서 새로 빌드하므로 불필요)
+build/
+target/
+.gradle/
+bin/
+out/
+
+# IDE 설정 파일
+.idea/
+.vscode/
+.settings/
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+
+# OS 생성 파일
+.DS_Store
+Thumbs.db
+
+# 문서 (이미지 실행에 불필요)
+*.md
+docs/
+
+# 인프라 코드 (이미지 안에 포함 불필요)
+Dockerfile
+docker-compose.yml
+k8s/
+helm/
+argocd/
+
+# CI/CD 설정
+.github/
+
+# 환경 변수 파일 (절대 이미지에 포함되면 안 됨!)
+.env
+.env.local
+.env.production
+
+# 로그 파일
+*.log
+logs/
