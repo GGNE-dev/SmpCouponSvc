@@ -4,11 +4,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.ggne.test.common.response.ApiResponse;
 import org.ggne.test.coupon.domain.Coupon;
-import org.ggne.test.coupon.domain.CouponIssue;
 import org.ggne.test.coupon.dto.CouponCreateRequest;
 import org.ggne.test.coupon.dto.CouponIssueResponse;
 import org.ggne.test.coupon.dto.CouponResponse;
-import org.ggne.test.coupon.repository.CouponIssueRepository;
 import org.ggne.test.coupon.service.CouponService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 public class CouponController {
 
     private final CouponService couponService;
-    private final CouponIssueRepository couponIssueRepository;
 
     // 쿠폰 생성
     @PostMapping
@@ -42,10 +39,8 @@ public class CouponController {
             @PathVariable Long couponId,
             @RequestHeader("X-USER-ID") Long userId
     ) {
-        Long couponIssueId = couponService.issue(couponId, userId);
-        Coupon coupon = couponService.getCoupon(couponId);
-        CouponIssue couponIssue = couponIssueRepository.findById(couponIssueId).get();
-        return ApiResponse.success(HttpStatus.CREATED.value(), CouponIssueResponse.of(couponIssue, coupon));
+        CouponIssueResponse couponIssueResponse = couponService.issueAndGetResponse(couponId, userId);
+        return ApiResponse.success(HttpStatus.CREATED.value(), couponIssueResponse);
     }
 
     @GetMapping("/{couponId}")

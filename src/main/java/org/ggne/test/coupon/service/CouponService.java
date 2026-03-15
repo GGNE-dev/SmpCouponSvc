@@ -8,6 +8,7 @@ import org.ggne.test.common.exception.ErrorCode;
 import org.ggne.test.coupon.domain.Coupon;
 import org.ggne.test.coupon.domain.CouponIssue;
 import org.ggne.test.coupon.domain.DiscountType;
+import org.ggne.test.coupon.dto.CouponIssueResponse;
 import org.ggne.test.coupon.repository.CouponIssueRepository;
 import org.ggne.test.coupon.repository.CouponRepository;
 import org.ggne.test.user.service.UserService;
@@ -114,5 +115,18 @@ public class CouponService {
     public Coupon getCoupon(Long couponId) {
         return couponRepository.findById(couponId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.COUPON_NOT_FOUND));
+    }
+
+    public CouponIssueResponse issueAndGetResponse(Long couponId, Long userId) {
+        // 쿠폰 발급
+        Long couponIssueId = issue(couponId, userId);
+
+        // CouponIssue와 Coupon 정보를 함께 조회
+        CouponIssue couponIssue = couponIssueRepository.findById(couponIssueId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.COUPON_ISSUE_NOT_FOUND));
+        Coupon coupon = couponRepository.findById(couponIssue.getCouponId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.COUPON_NOT_FOUND));
+
+        return CouponIssueResponse.of(couponIssue, coupon);
     }
 }

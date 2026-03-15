@@ -16,7 +16,7 @@ services:
     image: redis:latest
     container_name: coupon-redis
     ports:
-      - "6379:6379"
+      - "7000:6379"               # 로컬 pc 포트 예약 범위로 인해 사용불가하여 변경
 
   prometheus:
     image: prom/prometheus:latest

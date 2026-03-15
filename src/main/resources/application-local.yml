@@ -4,6 +4,10 @@ spring:
     username: coupon
     password: coupon123
     driver-class-name: com.mysql.cj.jdbc.Driver
+  data:
+    redis:
+      host: localhost
+      port: 7000
   jpa:
     hibernate:
       ddl-auto: create-drop
