@@ -1,0 +1,28 @@
+# Chart.yaml - Helm Chart의 메타정보 파일
+# npm의 package.json, gradle의 build.gradle과 같은 역할
+
+# Helm Chart API 버전 (v2 = Helm 3 기준)
+apiVersion: v2
+
+# Chart 이름 (helm install 시 참조됨)
+name: smp-coupon-svc
+
+# Chart 설명
+description: A Helm chart for SmpCouponSvc
+
+# Chart 타입
+# application = 실제 배포용 (우리 케이스)
+# library     = 다른 Chart에서 재사용되는 공통 템플릿용
+type: application
+
+# Chart 버전 (Chart 자체의 버전, 앱 버전과 별개)
+# Chart 구조가 바뀔 때 올림
+version: 0.1.0
+
+# 실제 애플리케이션 버전
+# kubectl get deployment 시 LABELS에 표시됨
+appVersion: "1.0.0"
+
+maintainers:
+  - name: Your Name
+    email: your.email@example.com

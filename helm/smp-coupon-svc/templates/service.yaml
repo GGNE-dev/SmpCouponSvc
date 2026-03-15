@@ -1,0 +1,22 @@
+# templates/service.yaml - Service 템플릿
+# Pod에 접근하는 네트워크 창구 정의
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.app.name }}
+  namespace: {{ .Values.namespace }}
+spec:
+  # values-dev.yaml: NodePort / values-prod.yaml: ClusterIP (LoadBalancer 앞에 두는 경우)
+  type: {{ .Values.app.service.type }}
+  selector:
+    app: {{ .Values.app.name }}
+  ports:
+  - port: {{ .Values.app.service.port }}           # Service가 노출하는 포트
+    targetPort: {{ .Values.app.service.targetPort }} # 실제 컨테이너 포트
+    # NodePort일 때만 nodePort 필드 추가 (Go 템플릿 조건문)
+    {{- if eq .Values.app.service.type "NodePort" }}
+    nodePort: {{ .Values.app.service.nodePort }}
+    {{- end }}
+    protocol: TCP
+    name: http

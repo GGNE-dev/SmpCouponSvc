@@ -1,0 +1,76 @@
+# values.yaml - 기본값 정의 파일
+# 템플릿(templates/)에서 {{ .Values.xxx }} 형태로 참조됨
+# values-dev.yaml, values-prod.yaml에서 덮어쓰기(override) 가능
+
+# 배포될 네임스페이스
+namespace: smp-coupon
+
+# =====================
+# 애플리케이션 설정
+# =====================
+app:
+  name: smp-coupon-svc
+
+  # Pod 개수 (기본 3개, dev 환경에서는 1개로 override)
+  replicaCount: 3
+
+  image:
+    # Phase 3에서 실제 GitHub Container Registry 이미지로 교체
+    repository: ghcr.io/YOUR_GITHUB_USERNAME/smp-coupon-svc
+    # Always: 매번 최신 이미지 pull / IfNotPresent: 로컬에 있으면 재사용
+    pullPolicy: Always
+    tag: "latest"
+
+  service:
+    # NodePort: 외부에서 접근 가능 / ClusterIP: 내부에서만 접근
+    type: NodePort
+    port: 80           # Service가 노출하는 포트
+    targetPort: 8080   # 실제 컨테이너 포트 (Spring Boot 기본값)
+    nodePort: 30080    # 외부에서 접근할 포트 (30000~32767 범위)
+
+  # 컨테이너 리소스 제한
+  # requests: 최소 보장량 (스케줄링 기준)
+  # limits: 최대 허용량 (초과 시 OOM Kill)
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"    # 250m = 0.25 core
+    limits:
+      memory: "1Gi"
+      cpu: "500m"    # 500m = 0.5 core
+
+# =====================
+# 자동 스케일링 (HPA)
+# =====================
+autoscaling:
+  enabled: true
+  minReplicas: 2   # 최소 Pod 개수
+  maxReplicas: 10  # 최대 Pod 개수
+  targetCPUUtilizationPercentage: 70    # CPU 70% 초과 시 스케일 아웃
+  targetMemoryUtilizationPercentage: 80 # 메모리 80% 초과 시 스케일 아웃
+
+# =====================
+# MySQL 설정
+# =====================
+mysql:
+  enabled: true
+  image: mysql:8.0
+  rootPassword: root
+  database: coupon_db
+  user: coupon
+  password: coupon123
+  storage: 1Gi  # PVC 용량
+
+# =====================
+# Redis 설정
+# =====================
+redis:
+  enabled: true
+  image: redis:7-alpine
+
+# =====================
+# Spring Boot 설정
+# =====================
+spring:
+  profiles:
+    active: prod  # 활성화할 Spring Profile

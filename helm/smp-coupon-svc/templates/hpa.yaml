@@ -1,0 +1,33 @@
+# templates/hpa.yaml - HorizontalPodAutoscaler 템플릿
+# autoscaling.enabled가 true일 때만 이 리소스를 생성
+
+# autoscaling.enabled가 true면 아래 내용 포함 (Go 템플릿 조건문)
+# values-dev.yaml에서 enabled: false → 이 파일 전체가 무시됨
+# values-prod.yaml에서 enabled: true → HPA 생성됨
+{{- if .Values.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Values.app.name }}-hpa
+  namespace: {{ .Values.namespace }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Values.app.name }}
+  minReplicas: {{ .Values.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.autoscaling.maxReplicas }}
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.autoscaling.targetCPUUtilizationPercentage }}
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: {{ .Values.autoscaling.targetMemoryUtilizationPercentage }}
+{{- end }}

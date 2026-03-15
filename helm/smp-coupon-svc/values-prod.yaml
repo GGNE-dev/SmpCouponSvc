@@ -1,0 +1,27 @@
+# values-prod.yaml - 운영 환경 override 파일
+# values.yaml의 기본값 중 운영 환경에서 달라지는 값만 작성
+
+app:
+  # 운영 환경은 기본 5개 Pod로 시작
+  replicaCount: 5
+  image:
+    # 운영 배포는 명확한 버전 태그 사용 (latest 사용 금지)
+    tag: "v1.0.0"
+  # 운영 환경은 더 많은 리소스 할당
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "500m"
+    limits:
+      memory: "2Gi"
+      cpu: "1000m"
+
+# 운영 환경은 더 적극적인 스케일링
+autoscaling:
+  enabled: true
+  minReplicas: 3   # 최소 3개 (가용성 보장)
+  maxReplicas: 20  # 최대 20개까지 확장
+
+spring:
+  profiles:
+    active: prod

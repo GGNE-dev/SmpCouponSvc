@@ -1,0 +1,49 @@
+# templates/deployment.yaml - Deployment 템플릿
+# {{ .Values.xxx }} 형태로 values.yaml의 값을 참조
+# helm install 시 values 파일의 값으로 치환되어 실제 yaml이 생성됨
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  # values.yaml의 app.name 값으로 치환 → "smp-coupon-svc"
+  name: {{ .Values.app.name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.app.name }}
+spec:
+  # values-dev.yaml에서는 1, values-prod.yaml에서는 5로 치환됨
+  replicas: {{ .Values.app.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.app.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.app.name }}
+    spec:
+      containers:
+      - name: app
+        # "repository:tag" 형태로 조합 → "ghcr.io/.../smp-coupon-svc:latest"
+        image: "{{ .Values.app.image.repository }}:{{ .Values.app.image.tag }}"
+        imagePullPolicy: {{ .Values.app.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.app.service.targetPort }}
+          name: http
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: {{ .Values.spring.profiles.active }}
+        - name: SPRING_DATASOURCE_URL
+          # Go 템플릿 문법으로 값을 조합
+          value: "jdbc:mysql://mysql-service:3306/{{ .Values.mysql.database }}?serverTimezone=Asia/Seoul"
+        - name: SPRING_DATASOURCE_USERNAME
+          value: {{ .Values.mysql.user }}
+        - name: SPRING_DATASOURCE_PASSWORD
+          value: {{ .Values.mysql.password }}
+        - name: SPRING_DATA_REDIS_HOST
+          value: "redis-service"
+        - name: SPRING_DATA_REDIS_PORT
+          value: "6379"
+        resources:
+          # toYaml: 객체를 yaml 형식으로 변환
+          # nindent 10: 10칸 들여쓰기 (yaml 구조 맞추기 위함)
+          {{- toYaml .Values.app.resources | nindent 10 }}
