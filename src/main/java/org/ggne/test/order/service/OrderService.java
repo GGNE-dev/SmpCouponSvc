@@ -4,11 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.ggne.test.common.domain.Money;
 import org.ggne.test.common.exception.BusinessException;
 import org.ggne.test.common.exception.ErrorCode;
-import org.ggne.test.coupon.domain.Coupon;
-import org.ggne.test.coupon.domain.CouponIssue;
-import org.ggne.test.coupon.domain.IssueStatus;
-import org.ggne.test.coupon.repository.CouponIssueRepository;
-import org.ggne.test.coupon.repository.CouponRepository;
+import org.ggne.test.coupon.service.CouponService;
 import org.ggne.test.order.domain.Orders;
 import org.ggne.test.order.repository.OrderRepository;
 import org.ggne.test.user.service.UserService;
@@ -21,9 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class OrderService {
 
     private final OrderRepository orderRepository;
-    private final CouponRepository couponRepository;
-    private final CouponIssueRepository couponIssueRepository;
     private final UserService userService;
+    private final CouponService couponService;
 
     @Transactional
     public Long createOrder(Long userId, String itemName, int originalPrice, Long couponIssueId) {
@@ -35,27 +30,7 @@ public class OrderService {
 
         // 2. 쿠폰 적용 시 검증 및 할인 계산
         if (couponIssueId != null) {
-            CouponIssue couponIssue = couponIssueRepository.findById(couponIssueId)
-                    .orElseThrow(() -> new BusinessException(ErrorCode.COUPON_ISSUE_NOT_FOUND));
-
-            // 소유자 검증
-            if (!couponIssue.getUserId().equals(userId)) {
-                throw new BusinessException(ErrorCode.COUPON_NOT_OWNED);
-            }
-
-            // 상태 검증 (AVAILABLE 여부)
-            if (couponIssue.getStatus() != IssueStatus.AVAILABLE) {
-                throw new BusinessException(ErrorCode.COUPON_ALREADY_USED);
-            }
-
-            // 할인 금액 계산 (Coupon 엔티티 조회 필요)
-            Coupon coupon = couponRepository.findById(couponIssue.getCouponId())
-                    .orElseThrow(() -> new BusinessException(ErrorCode.COUPON_NOT_FOUND));
-
-            discountAmount = coupon.calculateDiscount(new Money(originalPrice));
-            
-            // 쿠폰 사용 처리 (USED)
-            couponIssue.use();
+            discountAmount = couponService.validateAndUseCoupon(couponIssueId, userId, originalPrice);
         }
 
         // 3. 주문 엔티티 생성 및 저장
@@ -97,14 +72,10 @@ public class OrderService {
             throw new BusinessException(ErrorCode.COUPON_NOT_OWNED);
         }
 
-        // 주문 상태 변경
+        // 주문 상태 변경 및 이벤트 등록
         order.cancel();
 
-        // 쿠폰 복구
-        if (order.getCouponIssueId() != null) {
-            CouponIssue couponIssue = couponIssueRepository.findById(order.getCouponIssueId())
-                    .orElseThrow(() -> new BusinessException(ErrorCode.COUPON_ISSUE_NOT_FOUND));
-            couponIssue.cancel();
-        }
+        // 이벤트 발행을 위해 명시적으로 save() 호출
+        orderRepository.save(order);
     }
 }

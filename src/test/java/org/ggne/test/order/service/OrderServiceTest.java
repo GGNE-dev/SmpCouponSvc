@@ -1,5 +1,7 @@
 package org.ggne.test.order.service;
 
+import jakarta.persistence.EntityManager;
+import org.apache.catalina.session.PersistentManager;
 import org.ggne.test.common.exception.BusinessException;
 import org.ggne.test.common.exception.ErrorCode;
 import org.ggne.test.coupon.domain.CouponIssue;
@@ -25,6 +27,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 class OrderServiceTest {
+
+    @Autowired
+    private EntityManager entityManager;
 
     @Autowired
     private OrderService orderService;
@@ -115,6 +120,9 @@ class OrderServiceTest {
 
         // when
         orderService.cancelOrder(orderId, userId);
+
+        // 영속성 컨텍스트 초기화 코드 추가 (1차 캐시 제거 - DB에서 최신 데이터 다시 조회)
+        entityManager.clear();
 
         // then
         Orders order = orderRepository.findById(orderId).orElseThrow();

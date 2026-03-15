@@ -6,7 +6,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.ggne.test.common.domain.Money;
+import org.ggne.test.order.domain.event.OrderCancelledEvent;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.domain.AbstractAggregateRoot;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
@@ -16,7 +18,7 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners(AuditingEntityListener.class)
-public class Orders {
+public class Orders extends AbstractAggregateRoot<Orders> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,17 +34,14 @@ public class Orders {
 
     @Embedded
     @AttributeOverride(name = "amount", column = @Column(name = "original_price", nullable = false))
-    @Column(nullable = false)
     private Money originalPrice;
 
     @Embedded
     @AttributeOverride(name = "amount", column = @Column(name = "discount_amount", nullable = false))
-    @Column(nullable = false)
     private Money discountAmount;
 
     @Embedded
     @AttributeOverride(name = "amount", column = @Column(name = "final_price", nullable = false))
-    @Column(nullable = false)
     private Money finalPrice;
 
     @Enumerated(EnumType.STRING)
@@ -76,5 +75,11 @@ public class Orders {
             throw new IllegalStateException("이미 취소된 주문입니다.");
         }
         this.status = OrderStatus.CANCELLED;
+
+        // 주문 취소 후, 쿠폰 복구 이벤트 발행
+        if (this.couponIssueId != null) {
+            // AbstractAggregateRoot의 메소드
+            registerEvent(new OrderCancelledEvent(this.id, this.userId, this.couponIssueId));
+        }
     }
 }
